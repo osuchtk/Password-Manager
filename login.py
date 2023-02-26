@@ -33,7 +33,8 @@ class Login(FloatLayout):
                                   size_hint = (None, None),
                                   pos = (200, 200),
                                   width = 200,
-                                  height = 30)
+                                  height = 30,
+                                  write_tab = False)
         self.add_widget(self.username)
 
         # password label and text field
@@ -45,7 +46,8 @@ class Login(FloatLayout):
                                   size_hint =(None, None),
                                   pos = (200, 140),
                                   width = 200,
-                                  height = 30)
+                                  height = 30,
+                                  write_tab = False)
         self.add_widget(self.password)
 
         # login button

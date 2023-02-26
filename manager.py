@@ -94,24 +94,28 @@ class MainScreen(GridLayout):
                                     hint_text="Where to use credentials",
                                     size_hint=(1, 1),
                                     pos=(200, 200),
+                                    write_tab = False
                                     )
 
         self.username = TextInput(multiline=False,
                                   hint_text = "Username",
                                   size_hint=(1, 1),
                                   pos=(200, 200),
+                                  write_tab=False
                                   )
 
         self.password = TextInput(multiline=False,
                                   hint_text="Password",
                                   size_hint=(1, 1),
                                   pos=(200, 200),
+                                  write_tab=False
                                   )
 
         self.description = TextInput(multiline=True,
                                      hint_text="Description",
                                      size_hint=(1, 1),
                                      pos=(200, 200),
+                                     write_tab=False
                                      )
 
         self.addButton = Button(text ="Save",
