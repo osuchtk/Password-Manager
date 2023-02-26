@@ -1,20 +1,18 @@
-from kivy.config import Config
-Config.set('graphics', 'resizable', False)
-Config.set('graphics', 'width', '450')
-Config.set('graphics', 'height', '320')
-
 import bcrypt
 import kivy
-from kivy.app import App
 from kivy.uix.label import Label
 from kivy.uix.textinput import TextInput
 from kivy.uix.gridlayout import GridLayout
-from kivy.uix.boxlayout import BoxLayout
 from kivy.uix.floatlayout import FloatLayout
 from kivy.uix.button import Button
 from kivy.uix.popup import Popup
+from kivy.core.window import Window
+
+from manager import MainScreen
 
 kivy.require('2.1.0')
+#abcd
+#1234
 
 
 class Login(FloatLayout):
@@ -32,11 +30,9 @@ class Login(FloatLayout):
                               size_hint = (1, 1),
                               pos = (-130, 50)))
         self.username = TextInput(multiline = False,
-                                  size_hint = (1, 1),
+                                  size_hint = (None, None),
                                   pos = (200, 200),
-                                  size_hint_x = None,
                                   width = 200,
-                                  size_hint_y = None,
                                   height = 30)
         self.add_widget(self.username)
 
@@ -46,19 +42,16 @@ class Login(FloatLayout):
                               pos = (-130, -10)))
         self.password = TextInput(multiline = False,
                                   password = True,
-                                  size_hint =(1, 1),
+                                  size_hint =(None, None),
                                   pos = (200, 140),
-                                  size_hint_x = None,
                                   width = 200,
-                                  size_hint_y = None,
                                   height = 30)
         self.add_widget(self.password)
 
         # login button
         self.login = Button(text = "Login",
-                            size_hint_x = None,
+                            size_hint = (None, None),
                             width = 200,
-                            size_hint_y = None,
                             height = 30,
                             background_normal = '',
                             background_color = (1, 0, 0, 1),
@@ -69,9 +62,8 @@ class Login(FloatLayout):
 
         # register button
         self.login = Button(text = "Register",
-                            size_hint_x = None,
+                            size_hint = (None, None),
                             width = 200,
-                            size_hint_y = None,
                             height = 30,
                             background_normal = '',
                             background_color = (1, 0, 0, 1),
@@ -84,32 +76,30 @@ class Login(FloatLayout):
         # reading credentials from file
         file = open("./credentials.txt", "rb")
         usernameFile = str(file.readline()).split("'")[1].split('\\')[0]
-        passwordFile = file.readline()
+        passwordFile = file.readline().split(b'\n')[0]
         passwordEntered = bytes(self.password.text, 'ASCII')
+        file.close()
 
         if (usernameFile == self.username.text and bcrypt.checkpw(passwordEntered, passwordFile)) and \
                 len(self.password.text) > 0 and len(self.username.text) > 0:
-            print("zalogowano")
+            # print("zalogowano")
+            self.clear_widgets()
+            self.add_widget(MainScreen())
         else:
-            closeButton = Button(text='Close',
-                                 size_hint_x=None,
-                                 width=100,
-                                 size_hint_y=None,
-                                 height=30,
+            closeButton = Button(text = 'Close',
+                                 size_hint = (None, None),
+                                 width = 100,
+                                 height = 30,
                                  pos = (0, 50))
             information = Popup(title = "Wrong username or password",
                                 auto_dismiss=False,
                                 content = closeButton,
-                                size_hint_x=None,
-                                width=230,
-                                size_hint_y=None,
-                                height=100,
+                                size_hint = (None, None),
+                                width = 230,
+                                height = 100,
                                 )
             closeButton.bind(on_press = information.dismiss)
             information.open()
-
-        #abcd
-        #1234
 
     def register(self, button):
         # empty username or password
@@ -131,8 +121,8 @@ class Login(FloatLayout):
             textLabel = Label(text = "You are trying to create new account.If it is your first time\nlogging into "
                                      "application click Continue, otherwise click Cancel.\nCreating new account while "
                                      "having passwords wrote up\nin the memory will erase them!",
-                              size_hint=(1, 1),
-                              pos=(500, 120),
+                              size_hint = (1, 1),
+                              pos = (500, 120),
                               )
             continueButton = Button(text = "Continue")
             cancelButton = Button(text="Cancel")
@@ -170,15 +160,3 @@ class Login(FloatLayout):
         information.open()
 
         continueButton.bind(on_press=information.dismiss)
-
-
-
-
-
-# class MyApp(App):
-#     def build(self):
-#         self.title = "Password Manager"
-#         return Login()
-#
-#
-# MyApp().run()
