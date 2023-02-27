@@ -3,9 +3,9 @@ Config.set('graphics', 'resizable', False)
 Config.set('graphics', 'width', '450')
 Config.set('graphics', 'height', '320')
 import kivy
-import bcrypt
-import rsa
 
+from cryptography.fernet import Fernet
+from kivy.app import App
 from functools import partial
 from kivy.uix.label import Label
 from kivy.uix.textinput import TextInput
@@ -15,16 +15,11 @@ from kivy.uix.button import Button
 from kivy.uix.popup import Popup
 from kivy.uix.scrollview import ScrollView
 
-from kivy.app import App
-
 kivy.require('2.1.0')
 
 
-from kivy.graphics import *
-
-
 class MainScreen(GridLayout):
-    def __init__(self, privateKey):
+    def __init__(self, fernetGenerator, key):
         super(MainScreen, self).__init__()
         # declaring elements
         self.WhereToUse = None
@@ -36,7 +31,8 @@ class MainScreen(GridLayout):
         self.addNewInformation = None
         self.listPosition = None
         self.root = None
-        self.privateKey = int(privateKey)
+        self.fernetGenerator = fernetGenerator
+        self.privateKey = key
 
         # preparing layout for main window
         self.cols = 2
@@ -66,16 +62,18 @@ class MainScreen(GridLayout):
 
         self.savedAccountsLayout = GridLayout(cols = 1,
                                               spacing = (10, 10),
-                                              size_hint = (0.2, None))
-        self.showAccountDetailsLayout = GridLayout(cols = 2,
-                                                   spacing = (10, 10),
-                                                   size_hint = (0.5, None))
+                                              size_hint = (0.2, 1)
+                                              )
+        self.showAccountDetailsLayout = FloatLayout(size_hint = (0.5, 1)
+                                                    )
 
         self.showSavedCredentials()
-        #self.add_widget(self.root)
+        self.add_widget(self.root)
         self.add_widget(self.savedAccountsLayout)
 
-        informationLabel = Label(text = "Choose account to see credentials.")
+        informationLabel = Label(text = "Choose account to see credentials.",
+                                 size_hint = (0.5, 0.5),
+                                 pos_hint = {'x': 0.28, 'y': 0.6})
         logoutButton = Button(text = "Logout",
                               size_hint = (0.3, 0.1))
         self.showAccountDetailsLayout.add_widget(informationLabel)
@@ -151,8 +149,8 @@ class MainScreen(GridLayout):
                 self.description.text = "empty"
 
             #salt = bcrypt.gensalt()
-            publicKey = 9487202569294169024209368019582571446386911515841866684148478612688885730862837815231856165838895818036386568793814145524941975906103735292825168830459061
-            password = rsa.encrypt(self.password.text.encode(), publicKey)
+            password = Fernet(self.fernetGenerator)
+            password = password.encrypt(self.password.text.encode())
 
             file = open("./credentials.txt", "ab")
             file.write(bytes("\n", 'ASCII'))
@@ -192,51 +190,76 @@ class MainScreen(GridLayout):
         file.close()
 
         # making list from all lines of file
-        credentialsList = fileContent[3:]
+        credentialsList = fileContent[4:]
 
         # iterating through data and selecting WhereToUse property to use it as button text
-        for index, element in enumerate(fileContent[3:]):
+        for index, element in enumerate(fileContent[4:]):
             if index % 4 == 0:
                 #self.WhereToUse = str(credentialsList[0 + index]).split("'")[1]
                 self.username = str(credentialsList[1 + index]).split("'")[1]
                 self.password = str(credentialsList[2 + index]).split("'")[1]
-                self.description = str(credentialsList[3 + index]).split("'")[1]
+                decryptedPassword = Fernet(self.fernetGenerator)
+                decryptedPassword = decryptedPassword.decrypt(bytes(self.password, 'ASCII')).decode()
+
+                if str(credentialsList[3 + index]).split("'")[1] == "empty":
+                    self.description = ""
+                else:
+                    self.description = str(credentialsList[3 + index]).split("'")[1]
                 title = str(element).split("'")[1]
-                self.listPosition = Button(text=title,
-                                           size_hint=(0.2, None),
+                self.listPosition = Button(text = title,
+                                           size_hint = (0.5, None),
                                            #width = 70,
-                                           height=30,
-                                           background_normal='',
-                                           background_color=(0.96, 0.71, 0, 1)
+                                           height = 30,
+                                           background_normal = '',
+                                           background_color = (0.96, 0.71, 0, 1)
                                            )
-                self.listPosition.bind(on_press=partial(self.showAccountInformation, self.username, self.password,
+                self.listPosition.bind(on_press=partial(self.showAccountInformation, self.username, decryptedPassword,
                                                         self.description))
                 self.savedAccountsLayout.add_widget(self.listPosition)
-        # self.root = ScrollView(do_scroll_x = False,
-        #                        width=70,
-        #                        height=30,
-        #                        bar_color = (1, 1, 1, 1),
-        #                        effect_cls = 'ScrollEffect'
-        #                        )
-        # self.root.add_widget(self.savedAccountsLayout)
+        self.root = ScrollView(do_scroll_x = False,
+                               width=70,
+                               height=30,
+                               bar_color = (1, 1, 1, 1),
+                               effect_cls = 'ScrollEffect'
+                               )
+        self.root.add_widget(self.savedAccountsLayout)
 
     def showAccountInformation(self, username, password, description, object):
         self.showAccountDetailsLayout.clear_widgets()
-        usernameLabel = Label(text = "Username:")
-        passwordLabel = Label(text="Password:")
-        descriptionLabel = Label(text="Description:")
+        usernameLabel = Label(text = "Username:",
+                              size_hint = (0.5, None),
+                              pos_hint = {'x': 0, 'y': 0.7}
+                              )
+        passwordLabel = Label(text = "Password:",
+                              size_hint=(0.5, None),
+                              pos_hint={'x': 0, 'y': 0.5}
+                              )
+        descriptionLabel = Label(text = "Description:",
+                                 size_hint=(0.5, None),
+                                 pos_hint={'x': 0, 'y': 0.3}
+                                 )
         usernameValue = TextInput(text = "{}".format(username),
                                   readonly = True,
                                   multiline = False,
-                                  width = 1)
-        passwordValue = TextInput(text="{}".format(password),
-                                  readonly=True,
-                                  multiline = False,)
-        descriptionValue = TextInput(text="{}".format(description),
-                                     readonly=True,
+                                  size_hint=(0.49, 0.12),
+                                  pos_hint={'x': 0.5, 'y': 0.83})
+        passwordValue = TextInput(text = "{}".format(password),
+                                  readonly = True,
+                                  multiline = False,
+                                  size_hint=(0.49, 0.12),
+                                  pos_hint={'x': 0.5, 'y': 0.63}
+                                  )
+        descriptionValue = TextInput(text = "{}".format(description),
+                                     readonly = True,
                                      multiline = True,
-                                     height = 100
+                                     size_hint=(0.49, 0.2),
+                                     pos_hint={'x': 0.5, 'y': 0.35}
                                      )
+        closeButton = Button(text = "Close",
+                             size_hint=(0.3, 0.2),
+                             pos_hint={'x': 0.3, 'y': 0.1}
+                             )
+        closeButton.bind(on_press = self.clearDetails)
 
         self.showAccountDetailsLayout.add_widget(usernameLabel)
         self.showAccountDetailsLayout.add_widget(usernameValue)
@@ -247,13 +270,23 @@ class MainScreen(GridLayout):
         self.showAccountDetailsLayout.add_widget(descriptionLabel)
         self.showAccountDetailsLayout.add_widget(descriptionValue)
 
+        self.showAccountDetailsLayout.add_widget(closeButton)
+
+    def clearDetails(self, ojb):
+        self.showAccountDetailsLayout.clear_widgets()
+        informationLabel = Label(text="Choose account to see credentials.",
+                                 size_hint=(0.5, 0.5),
+                                 pos_hint={'x': 0.28, 'y': 0.6}
+                                 )
+        self.showAccountDetailsLayout.add_widget(informationLabel)
 
 
-# private = 9487202569294169024209368019582571446386911515841866684148478612688885730862837815231856165838895818036386568793814145524941975906103735292825168830459061
-# class MyApp(App):
-#     def build(self):
-#         self.title = "Password Manager"
-#         return MainScreen(private)
-#
-#
-# MyApp().run()
+fernetGenerator = b'6vEhzwGrIgziXF4I7GPRKOZTlXGR-DpZCRg1bkiEmP0=\n'
+key = b'\xe6S\x95q\x91\xf8:Y\t\x185nH\x84\x98\xfd\n'
+class MyApp(App):
+    def build(self):
+        self.title = "Password Manager"
+        return MainScreen(fernetGenerator, key)
+
+
+MyApp().run()
