@@ -15,6 +15,7 @@ from kivy.uix.floatlayout import FloatLayout
 from kivy.uix.button import Button
 from kivy.uix.popup import Popup
 from kivy.uix.scrollview import ScrollView
+from kivy.core.window import Window
 
 kivy.require('2.1.0')
 
@@ -62,17 +63,20 @@ class MainScreen(GridLayout):
         # preparing layout for accounts list
         self.savedAccountsLayout = GridLayout(cols=1,
                                               spacing=(10, 10),
-                                              size_hint=(0.2, 1))
+                                              size_hint=(0.2, None))
+        self.savedAccountsLayout.bind(minimum_height=self.savedAccountsLayout.setter('height'))
+
         # preparing layout for account details
         self.showAccountDetailsLayout = FloatLayout(size_hint=(0.5, 1))
         self.showSavedCredentials()
 
         # add scroll bar to accounts list
-        self.root = ScrollView(do_scroll_x=False,
-                               do_scroll_y=True,
-                               size_hint=(0.2, 1),
+        self.root = ScrollView(do_scroll_y=True,
+                               do_scroll_x=False,
+                               size_hint=(0.22, 1),
                                bar_color=(1, 1, 1, 1),
-                               # effect_cls = 'ScrollEffect'
+                               #size=(Window.width, Window.height),
+                               #effect_cls = 'OpacityScrollEffect'
                                )
         self.root.add_widget(self.savedAccountsLayout)
         self.add_widget(self.root)
@@ -245,12 +249,6 @@ class MainScreen(GridLayout):
                 self.listPosition.bind(on_press=partial(self.showAccountInformation, self.username, decryptedPassword,
                                                         self.description))
                 self.savedAccountsLayout.add_widget(self.listPosition)
-        # self.root = ScrollView(do_scroll_y = False,
-        #                        #size_hint = (0.2, 1),
-        #                        bar_color = (1, 1, 1, 1),
-        #                        #effect_cls = 'ScrollEffect'
-        #                        )
-        # self.root.add_widget(self.savedAccountsLayout)
 
     # method preparing view to show when button with account is clicked
     def showAccountInformation(self, username, password, description, object):
