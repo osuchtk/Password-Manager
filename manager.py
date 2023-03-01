@@ -33,7 +33,7 @@ class MainScreen(GridLayout):
         self.description = None
         self.addNewInformation = None
         self.listPosition = None
-        self.root = None
+        self.scroll = None
         self.fernetGenerator = fernetGenerator
         self.privateKey = key
 
@@ -71,26 +71,26 @@ class MainScreen(GridLayout):
         self.showSavedCredentials()
 
         # add scroll bar to accounts list
-        self.root = ScrollView(do_scroll_y=True,
-                               do_scroll_x=False,
-                               size_hint=(0.22, 1),
-                               bar_color=(1, 1, 1, 1),
-                               #size=(Window.width, Window.height),
-                               #effect_cls = 'OpacityScrollEffect'
-                               )
-        self.root.add_widget(self.savedAccountsLayout)
-        self.add_widget(self.root)
+        self.scroll = ScrollView(do_scroll_y=True,
+                                 do_scroll_x=False,
+                                 size_hint=(0.22, 1),
+                                 bar_color=(1, 1, 1, 1),
+                                 size=(Window.width, Window.height))
+        self.scroll.add_widget(self.savedAccountsLayout)
+        self.add_widget(self.scroll)
         # self.add_widget(self.savedAccountsLayout)
-        # self.savedAccountsLayout.add_widget(self.root)
+        # self.savedAccountsLayout.add_widget(self.scroll)
 
         # friendly information to choose one account from the list
         informationLabel = Label(text="Choose account to see credentials.",
                                  size_hint=(0.5, 0.5),
                                  pos_hint={'x': 0.28, 'y': 0.6})
-        logoutButton = Button(text="Logout",
-                              size_hint=(0.3, 0.1))
+        self.logoutButton = Button(text="Logout",
+                                   size_hint=(0.3, 0.1),
+                                   pos_hint={'x': 0.35, 'y': 0.05})
+        self.logoutButton.bind(on_press=self.logout)
         self.showAccountDetailsLayout.add_widget(informationLabel)
-        # self.showAccountDetailsLayout.add_widget(logoutButton)
+        self.showAccountDetailsLayout.add_widget(self.logoutButton)
         self.add_widget(self.showAccountDetailsLayout)
 
     # method where view for adding new data is prepared
@@ -282,9 +282,17 @@ class MainScreen(GridLayout):
                                      multiline=True,
                                      size_hint=(0.49, 0.2),
                                      pos_hint={'x': 0.5, 'y': 0.35})
+        editButton = Button(text="Edit",
+                            size_hint=(0.3, 0.1),
+                            pos_hint={'x': 0.15, 'y': 0.2})
+        editButton.bind(on_press=self.editCredentials)
+        deleteButton = Button(text = "Delete",
+                              size_hint=(0.3, 0.1),
+                              pos_hint={'x': 0.55, 'y': 0.2})
+        deleteButton.bind(on_press=self.deleteCredentials)
         closeButton = Button(text="Close",
-                             size_hint=(0.3, 0.2),
-                             pos_hint={'x': 0.3, 'y': 0.1})
+                             size_hint=(0.3, 0.1),
+                             pos_hint={'x': 0.35, 'y': 0.05})
         closeButton.bind(on_press=self.clearDetails)
 
         self.showAccountDetailsLayout.add_widget(usernameLabel)
@@ -296,6 +304,8 @@ class MainScreen(GridLayout):
         self.showAccountDetailsLayout.add_widget(descriptionLabel)
         self.showAccountDetailsLayout.add_widget(descriptionValue)
 
+        self.showAccountDetailsLayout.add_widget(editButton)
+        self.showAccountDetailsLayout.add_widget(deleteButton)
         self.showAccountDetailsLayout.add_widget(closeButton)
 
     # clearing detailed view from any widgets and showing friendly information
@@ -306,6 +316,21 @@ class MainScreen(GridLayout):
                                  size_hint=(0.5, 0.5),
                                  pos_hint={'x': 0.28, 'y': 0.6})
         self.showAccountDetailsLayout.add_widget(informationLabel)
+        self.showAccountDetailsLayout.add_widget(self.logoutButton)
+
+    # editing saved credentials
+    def editCredentials(self, obj):
+        print("editing")
+
+    # deleting saved credentials
+    def deleteCredentials(self, obj):
+        print("deleting")
+
+    # function logging out user
+    def logout(self, obj):
+        self.clear_widgets()
+        from login import Login
+        self.add_widget(Login())
 
 
 fernetGenerator = b'6vEhzwGrIgziXF4I7GPRKOZTlXGR-DpZCRg1bkiEmP0=\n'

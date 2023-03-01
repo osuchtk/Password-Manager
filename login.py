@@ -90,9 +90,9 @@ class Login(FloatLayout):
         self.key = file.readline()
         file.close()
 
+        # checking if credentials used to log in are correct
         if (usernameFile == self.username.text and bcrypt.checkpw(passwordEntered, passwordFile)) and \
                 len(self.password.text) > 0 and len(self.username.text) > 0:
-            # print("zalogowano")
             self.clear_widgets()
             self.add_widget(MainScreen(self.fernetGenerator, self.key))
         else:
