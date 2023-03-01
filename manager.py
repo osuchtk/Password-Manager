@@ -222,7 +222,7 @@ class MainScreen(GridLayout):
         for index, element in enumerate(fileContent[4:]):
             if index % 4 == 0:
                 # getting items from list to use them in detailed view
-                # self.WhereToUse = str(credentialsList[0 + index]).split("'")[1]
+                self.WhereToUse = str(credentialsList[0 + index]).split("'")[1]
                 self.username = str(credentialsList[1 + index]).split("'")[1]
                 self.password = str(credentialsList[2 + index]).split("'")[1]
 
@@ -247,11 +247,11 @@ class MainScreen(GridLayout):
 
                 # adding username, password and description to details
                 self.listPosition.bind(on_press=partial(self.showAccountInformation, self.username, decryptedPassword,
-                                                        self.description))
+                                                        self.description, self.WhereToUse, index))
                 self.savedAccountsLayout.add_widget(self.listPosition)
 
     # method preparing view to show when button with account is clicked
-    def showAccountInformation(self, username, password, description, object):
+    def showAccountInformation(self, username, password, description, whereUsed, whereUsedIndex, object):
         # clearing view from any widgets
         self.showAccountDetailsLayout.clear_widgets()
 
@@ -282,6 +282,8 @@ class MainScreen(GridLayout):
                                      multiline=True,
                                      size_hint=(0.49, 0.2),
                                      pos_hint={'x': 0.5, 'y': 0.35})
+
+        # adding buttons to delete and edit data
         editButton = Button(text="Edit",
                             size_hint=(0.3, 0.1),
                             pos_hint={'x': 0.15, 'y': 0.2})
@@ -289,7 +291,7 @@ class MainScreen(GridLayout):
         deleteButton = Button(text = "Delete",
                               size_hint=(0.3, 0.1),
                               pos_hint={'x': 0.55, 'y': 0.2})
-        deleteButton.bind(on_press=self.deleteCredentials)
+        deleteButton.bind(on_press=partial(self.deleteCredentials, whereUsed, whereUsedIndex))
         closeButton = Button(text="Close",
                              size_hint=(0.3, 0.1),
                              pos_hint={'x': 0.35, 'y': 0.05})
@@ -323,8 +325,61 @@ class MainScreen(GridLayout):
         print("editing")
 
     # deleting saved credentials
-    def deleteCredentials(self, obj):
-        print("deleting")
+    def deleteCredentials(self, whereUsed, whereUsedIndex, obj):
+        # preparing warning popup
+        deleteLayout = FloatLayout()
+        informationLabel = Label(text="Do you want to delete\nthis saved account?",
+                                 pos_hint={'x': 0., 'y': 0.25})
+        confirmButton = Button(text="OK",
+                               size_hint=(0.3, 0.1),
+                               pos_hint={'x': 0.55, 'y': 0.2})
+        cancelButton = Button(text="Cancel",
+                              size_hint=(0.3, 0.1),
+                              pos_hint={'x': 0.15, 'y': 0.2})
+
+        deleteLayout.add_widget(informationLabel)
+        deleteLayout.add_widget(confirmButton)
+        deleteLayout.add_widget(cancelButton)
+        information = Popup(title="Warning",
+                            content=deleteLayout,
+                            size_hint=(0.5, 0.5),
+                            pos_hint={'x': 0.25, 'y': 0.25})
+        confirmButton.bind(on_press=self.clearDetails)
+        confirmButton.bind(on_press=partial(self.confirmDeletion, whereUsed, whereUsedIndex))
+        confirmButton.bind(on_press=information.dismiss)
+        cancelButton.bind(on_press=information.dismiss)
+        information.open()
+
+    # deleting from file
+    def confirmDeletion(self, whereUsed, whereUsedIndex, obj):
+        # reading data from file
+        file = open("./credentials.txt", "rb")
+        fileContent = file.read().split(b'\n')
+        file.close()
+
+        # making list from all lines of file
+        credentialsList = fileContent[4:]
+
+        # opening file again, but this time to delete lines
+        file = open("./credentials.txt", "wb")
+        for index, element in enumerate(credentialsList):
+            if index == whereUsedIndex:
+                del credentialsList[index:index+4]
+
+        # combinig master credentials and remined saved accounts
+        remainedCredentials = fileContent[:4] + credentialsList
+
+        # saving to file
+        for ix, line in enumerate(remainedCredentials):
+            if ix < len(remainedCredentials) - 1:
+                file.write(line + bytes("\n", 'ASCII'))
+            else:
+                file.write(line)
+
+        file.close()
+        # clearing layout and reloading it
+        self.savedAccountsLayout.clear_widgets()
+        self.showSavedCredentials()
 
     # function logging out user
     def logout(self, obj):
