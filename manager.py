@@ -16,6 +16,7 @@ from kivy.uix.button import Button
 from kivy.uix.popup import Popup
 from kivy.uix.scrollview import ScrollView
 from kivy.core.window import Window
+from kivy.clock import Clock
 
 kivy.require('2.1.0')
 
@@ -27,10 +28,14 @@ class MainScreen(GridLayout):
         # declaring elements
         self.WhereToUse = None
         self.username = None
+        self.usernameEdited = None
         self.password = None
+        self.passwordEdited = None
         self.addButton = None
         self.cancelButton = None
+        self.saveEditedButton = None
         self.description = None
+        self.descriptionEdited = None
         self.addNewInformation = None
         self.listPosition = None
         self.scroll = None
@@ -194,9 +199,9 @@ class MainScreen(GridLayout):
         # if credentials are not good show another popup
         else:
             newCredentialsLayoutError = GridLayout(rows=4)
-            info = Label(text="Descripton must not be empty.\n"
-                              "Username must not be empty.\n"
-                              "Password must not be empty.")
+            info = Label(text="Descripton can not be empty.\n"
+                              "Username can not be empty.\n"
+                              "Password can not be empty.")
             button = Button(text="OK")
 
             newCredentialsLayoutError.add_widget(info)
@@ -247,11 +252,11 @@ class MainScreen(GridLayout):
 
                 # adding username, password and description to details
                 self.listPosition.bind(on_press=partial(self.showAccountInformation, self.username, decryptedPassword,
-                                                        self.description, self.WhereToUse, index))
+                                                        self.description, index))
                 self.savedAccountsLayout.add_widget(self.listPosition)
 
     # method preparing view to show when button with account is clicked
-    def showAccountInformation(self, username, password, description, whereUsed, whereUsedIndex, object):
+    def showAccountInformation(self, username, password, description, whereUsedIndex, object):
         # clearing view from any widgets
         self.showAccountDetailsLayout.clear_widgets()
 
@@ -287,11 +292,11 @@ class MainScreen(GridLayout):
         editButton = Button(text="Edit",
                             size_hint=(0.3, 0.1),
                             pos_hint={'x': 0.15, 'y': 0.2})
-        editButton.bind(on_press=self.editCredentials)
+        editButton.bind(on_press=partial(self.editCredentials, username, password, description, whereUsedIndex))
         deleteButton = Button(text = "Delete",
                               size_hint=(0.3, 0.1),
                               pos_hint={'x': 0.55, 'y': 0.2})
-        deleteButton.bind(on_press=partial(self.deleteCredentials, whereUsed, whereUsedIndex))
+        deleteButton.bind(on_press=partial(self.deleteCredentials, whereUsedIndex))
         closeButton = Button(text="Close",
                              size_hint=(0.3, 0.1),
                              pos_hint={'x': 0.35, 'y': 0.05})
@@ -321,11 +326,81 @@ class MainScreen(GridLayout):
         self.showAccountDetailsLayout.add_widget(self.logoutButton)
 
     # editing saved credentials
-    def editCredentials(self, obj):
-        print("editing")
+    def editCredentials(self, username, password, description, whereUsedIndex, obj):
+        # popup where user can add new credentials
+        # preparing layout
+        editingLayout = GridLayout(rows=5, padding=5)
+        editingLayout.spacing = (7, 7)
+
+        # text input for username
+        self.usernameEdited = TextInput(multiline=False,
+                                        text="{}".format(username),
+                                        hint_text="Username",
+                                        size_hint=(1, 1),
+                                        pos=(200, 200),
+                                        write_tab=False)
+
+        # text input for password
+        self.passwordEdited = TextInput(multiline=False,
+                                        text="{}".format(password),
+                                        hint_text="Password",
+                                        size_hint=(1, 1),
+                                        pos=(200, 200),
+                                        write_tab=False)
+
+        # text input for additional description
+        self.descriptionEdited = TextInput(multiline=True,
+                                           text="{}".format(description),
+                                           hint_text="Description",
+                                           size_hint=(1, 1),
+                                           pos=(200, 200),
+                                           write_tab=False)
+
+        # button for saving information
+        self.saveEditedButton = Button(text="Save",
+                                       size_hint=(1, 1),
+                                       background_normal='',
+                                       background_color=(1, 0, 0, 1),
+                                       pos=(120, 25))
+
+        # button to reject changes
+        self.cancelButton = Button(text="Cancel",
+                                   size_hint=(1, 1),
+                                   background_normal='',
+                                   background_color=(1, 0, 0, 1),
+                                   pos=(120, 25))
+
+        # adding widgets
+        #addingLayout.add_widget(self.WhereToUse)
+        editingLayout.add_widget(self.usernameEdited)
+        editingLayout.add_widget(self.passwordEdited)
+        editingLayout.add_widget(self.descriptionEdited)
+        editingLayout.add_widget(self.saveEditedButton)
+        editingLayout.add_widget(self.cancelButton)
+
+        # popup with editable text inputs
+        self.addNewInformation = Popup(title="Editing credentials",
+                                       content=editingLayout,
+                                       size_hint=(0.52, 1))
+
+        #self.usernameEdited.bind(on_text=partial(self.saveEditedCredentials, self.usernameEdited.text,
+                                              #self.passwordEdited.text, self.descriptionEdited.text, whereUsedIndex))
+        # Clock.schedule_once(partial(self.saveEditedCredentials, self.usernameEdited.text,
+        #                                       self.passwordEdited.text, self.descriptionEdited.text, whereUsedIndex))
+        self.saveEditedButton.bind(on_press=partial(self.saveEditedCredentials, self.usernameEdited.text,
+                                              self.passwordEdited.text, self.descriptionEdited.text, whereUsedIndex))
+        self.cancelButton.bind(on_press=self.addNewInformation.dismiss)
+
+        self.addNewInformation.open()
+
+    def saveEditedCredentials(self, username, password, description, whereUsedIndex, obj):
+        print("New username: ", username)
+        print("New password: ", password)
+        print("New description: ", description)
+        print(whereUsedIndex)
 
     # deleting saved credentials
-    def deleteCredentials(self, whereUsed, whereUsedIndex, obj):
+    def deleteCredentials(self, whereUsedIndex, obj):
         # preparing warning popup
         deleteLayout = FloatLayout()
         informationLabel = Label(text="Do you want to delete\nthis saved account?",
@@ -345,13 +420,13 @@ class MainScreen(GridLayout):
                             size_hint=(0.5, 0.5),
                             pos_hint={'x': 0.25, 'y': 0.25})
         confirmButton.bind(on_press=self.clearDetails)
-        confirmButton.bind(on_press=partial(self.confirmDeletion, whereUsed, whereUsedIndex))
+        confirmButton.bind(on_press=partial(self.confirmDeleting, whereUsedIndex))
         confirmButton.bind(on_press=information.dismiss)
         cancelButton.bind(on_press=information.dismiss)
         information.open()
 
     # deleting from file
-    def confirmDeletion(self, whereUsed, whereUsedIndex, obj):
+    def confirmDeleting(self, whereUsedIndex, obj):
         # reading data from file
         file = open("./credentials.txt", "rb")
         fileContent = file.read().split(b'\n')

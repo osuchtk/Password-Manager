@@ -34,9 +34,10 @@ class Login(FloatLayout):
                               font_size=20,
                               underline=True))
         # username label and text field
-        self.add_widget(Label(text="Login",
-                              size_hint=(1, 1),
-                              pos=(-130, 50)))
+        self.usernameLabel = Label(text="Login",
+                                   size_hint=(1, 1),
+                                   pos=(-130, 50))
+        self.add_widget(self.usernameLabel)
         self.username = TextInput(multiline=False,
                                   size_hint=(None, None),
                                   pos=(200, 200),
@@ -46,9 +47,10 @@ class Login(FloatLayout):
         self.add_widget(self.username)
 
         # password label and text field
-        self.add_widget(Label(text="Password",
-                              size_hint=(1, 1),
-                              pos=(-130, -10)))
+        self.passwordLabel = Label(text="Password",
+                                   size_hint=(1, 1),
+                                   pos=(-130, -10))
+        self.add_widget(self.passwordLabel)
         self.password = TextInput(multiline=False,
                                   password=True,
                                   size_hint=(None, None),
@@ -59,25 +61,25 @@ class Login(FloatLayout):
         self.add_widget(self.password)
 
         # login button
-        self.login = Button(text="Login",
-                            size_hint=(None, None),
-                            width=200,
-                            height=30,
-                            background_color=(1, 0, 0, 1),
-                            pos=(120, 75))
-        self.add_widget(self.login)
-        self.login.bind(on_press=self.loginFunction)
+        self.loginButton = Button(text="Login",
+                                  size_hint=(None, None),
+                                  width=200,
+                                  height=30,
+                                  background_color=(1, 0, 0, 1),
+                                  pos=(120, 75))
+        self.add_widget(self.loginButton)
+        self.loginButton.bind(on_press=self.loginFunction)
 
         # register button
-        self.login = Button(text="Register",
-                            size_hint=(None, None),
-                            width=200,
-                            height=30,
-                            background_normal='',
-                            background_color=(1, 0, 0, 1),
-                            pos=(120, 25))
-        self.add_widget(self.login)
-        self.login.bind(on_press=self.register)
+        self.registerButton = Button(text="Don't have account?",
+                                     size_hint=(None, None),
+                                     width=200,
+                                     height=25,
+                                     background_normal='',
+                                     background_color=(1, 0, 0, 1),
+                                     pos=(120, 30))
+        self.add_widget(self.registerButton)
+        self.registerButton.bind(on_press=self.register)
 
     # method used to log in into application
     def loginFunction(self, object):
@@ -112,6 +114,35 @@ class Login(FloatLayout):
 
     # metohd preparing view for registration
     def register(self, object):
+        # clearing view
+        self.clear_widgets()
+        self.add_widget(self.usernameLabel)
+        self.add_widget(self.username)
+        self.add_widget(self.passwordLabel)
+        self.add_widget(self.password)
+
+        createAccount = Button(text="Create account!",
+                               size_hint=(None, None),
+                               width=200,
+                               height=30,
+                               background_color=(1, 0, 0, 1),
+                               pos=(120, 75))
+        self.add_widget(createAccount)
+
+        backButton = Button(text="Cancel",
+                                size_hint=(None, None),
+                                width=200,
+                                height=25,
+                                background_normal='',
+                                background_color=(1, 0, 0, 1),
+                                pos=(120, 30))
+        self.add_widget(backButton)
+
+        createAccount.bind(on_press=self.createNewAccountWarning)
+        backButton.bind(on_press=self.reloadMainView)
+
+    # show warning when creating new account
+    def createNewAccountWarning(self, obj):
         # empty username or password
         if len(self.username.text) == 0 or len(self.password.text) == 0:
             informationLayout = GridLayout(rows=3, padding=5)
@@ -177,3 +208,7 @@ class Login(FloatLayout):
         information.open()
 
         continueButton.bind(on_press=information.dismiss)
+
+    def reloadMainView(self, obj):
+        self.clear_widgets()
+        self.add_widget(Login())
