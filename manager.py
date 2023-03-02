@@ -411,7 +411,7 @@ class MainScreen(GridLayout):
             confirmButton.bind(on_press=rejectEditPopup.dismiss)
             rejectEditPopup.open()
         else:
-            self.saveEditedButton.bind(on_press=self.addNewInformation.dismiss)
+            self.addNewInformation.dismiss()
             # reading data from file
             file = open("./credentials.txt", "rb")
             fileContent = file.read().split(b'\n')
