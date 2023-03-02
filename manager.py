@@ -16,7 +16,6 @@ from kivy.uix.button import Button
 from kivy.uix.popup import Popup
 from kivy.uix.scrollview import ScrollView
 from kivy.core.window import Window
-from kivy.clock import Clock
 
 kivy.require('2.1.0')
 
@@ -198,18 +197,23 @@ class MainScreen(GridLayout):
             self.showSavedCredentials()
         # if credentials are not good show another popup
         else:
-            newCredentialsLayoutError = GridLayout(rows=4)
+            newCredentialsLayoutError = FloatLayout()
             info = Label(text="Descripton can not be empty.\n"
                               "Username can not be empty.\n"
-                              "Password can not be empty.")
-            button = Button(text="OK")
+                              "Password can not be empty.",
+                         pos_hint={'x': 0., 'y': 0.20})
+            button = Button(text="OK",
+                            size_hint=(0.3, 0.2),
+                            pos_hint={'x': 0.35, 'y': 0.1}
+                            )
 
             newCredentialsLayoutError.add_widget(info)
             newCredentialsLayoutError.add_widget(button)
 
             # show popup with warning about data
             information = Popup(title="Warning",
-                                content=newCredentialsLayoutError)
+                                content=newCredentialsLayoutError,
+                                size_hint=(0.6, 0.6))
             information.open()
             button.bind(on_press=information.dismiss)
 
@@ -371,7 +375,6 @@ class MainScreen(GridLayout):
                                    pos=(120, 25))
 
         # adding widgets
-        #addingLayout.add_widget(self.WhereToUse)
         editingLayout.add_widget(self.usernameEdited)
         editingLayout.add_widget(self.passwordEdited)
         editingLayout.add_widget(self.descriptionEdited)
@@ -383,21 +386,76 @@ class MainScreen(GridLayout):
                                        content=editingLayout,
                                        size_hint=(0.52, 1))
 
-        #self.usernameEdited.bind(on_text=partial(self.saveEditedCredentials, self.usernameEdited.text,
-                                              #self.passwordEdited.text, self.descriptionEdited.text, whereUsedIndex))
-        # Clock.schedule_once(partial(self.saveEditedCredentials, self.usernameEdited.text,
-        #                                       self.passwordEdited.text, self.descriptionEdited.text, whereUsedIndex))
-        self.saveEditedButton.bind(on_press=partial(self.saveEditedCredentials, self.usernameEdited.text,
-                                              self.passwordEdited.text, self.descriptionEdited.text, whereUsedIndex))
+        self.saveEditedButton.bind(on_press=partial(self.saveEditedCredentials, whereUsedIndex))
         self.cancelButton.bind(on_press=self.addNewInformation.dismiss)
 
         self.addNewInformation.open()
 
-    def saveEditedCredentials(self, username, password, description, whereUsedIndex, obj):
-        print("New username: ", username)
-        print("New password: ", password)
-        print("New description: ", description)
-        print(whereUsedIndex)
+    def saveEditedCredentials(self, whereUsedIndex, obj):
+        # popup when username or password are empty
+        if len(self.usernameEdited.text) == 0 or len(self.passwordEdited.text) == 0:
+            rejectEditLayout = FloatLayout()
+            emptyDataLabel = Label(text="Username can not be empty.\nPassword can not be empty",
+                                   pos_hint={'x': 0., 'y': 0.15})
+            confirmButton = Button(text="OK",
+                                   size_hint=(0.3, 0.2),
+                                   pos_hint={'x': 0.35, 'y': 0.1}
+                                   )
+
+            rejectEditLayout.add_widget(emptyDataLabel)
+            rejectEditLayout.add_widget(confirmButton)
+
+            rejectEditPopup = Popup(title="Edit error",
+                                    content=rejectEditLayout,
+                                    size_hint=(0.5, 0.5),)
+            confirmButton.bind(on_press=rejectEditPopup.dismiss)
+            rejectEditPopup.open()
+        else:
+            self.saveEditedButton.bind(on_press=self.addNewInformation.dismiss)
+            # reading data from file
+            file = open("./credentials.txt", "rb")
+            fileContent = file.read().split(b'\n')
+            file.close()
+
+            # making list from all lines of file
+            credentialsList = fileContent[4:]
+
+            # writing edited data in place of old credentials
+            credentialsList[whereUsedIndex + 1] = bytes(self.usernameEdited.text, 'ASCII')
+
+            # encoding password
+            passwordDecode = Fernet(self.fernetGenerator)
+            passwordDecode = passwordDecode.encrypt(self.passwordEdited.text.encode())
+            credentialsList[whereUsedIndex + 2] = bytes(passwordDecode)
+
+            # decoding password
+            passwordDecode = str(passwordDecode).split("'")[1]
+            decryptedPassword = Fernet(self.fernetGenerator)
+            decryptedPassword = decryptedPassword.decrypt(bytes(passwordDecode, 'ASCII')).decode()
+
+            # when description was left empty
+            if len(credentialsList[whereUsedIndex + 3]) == 0:
+                credentialsList[whereUsedIndex + 3] = bytes("empty", 'ASCII')
+            else:
+                credentialsList[whereUsedIndex + 3] = bytes(self.descriptionEdited.text, 'ASCII')
+
+            # combinig master credentials and remined saved accounts
+            allCredentials = fileContent[:4] + credentialsList
+
+            # saving to file
+            file = open("./credentials.txt", "wb")
+            for ix, line in enumerate(allCredentials):
+                if ix < len(allCredentials) - 1:
+                    file.write(line + bytes("\n", 'ASCII'))
+                else:
+                    file.write(line)
+
+            file.close()
+
+            # reloading the view
+            self.savedAccountsLayout.clear_widgets()
+            self.clearDetails(self)
+            self.showSavedCredentials()
 
     # deleting saved credentials
     def deleteCredentials(self, whereUsedIndex, obj):
@@ -406,11 +464,11 @@ class MainScreen(GridLayout):
         informationLabel = Label(text="Do you want to delete\nthis saved account?",
                                  pos_hint={'x': 0., 'y': 0.25})
         confirmButton = Button(text="OK",
-                               size_hint=(0.3, 0.1),
-                               pos_hint={'x': 0.55, 'y': 0.2})
+                               size_hint=(0.3, 0.25),
+                               pos_hint={'x': 0.55, 'y': 0.1})
         cancelButton = Button(text="Cancel",
-                              size_hint=(0.3, 0.1),
-                              pos_hint={'x': 0.15, 'y': 0.2})
+                              size_hint=(0.3, 0.25),
+                              pos_hint={'x': 0.15, 'y': 0.1})
 
         deleteLayout.add_widget(informationLabel)
         deleteLayout.add_widget(confirmButton)
@@ -467,10 +525,10 @@ fernetGenerator = b'6vEhzwGrIgziXF4I7GPRKOZTlXGR-DpZCRg1bkiEmP0=\n'
 key = b'\xe6S\x95q\x91\xf8:Y\t\x185nH\x84\x98\xfd\n'
 
 
-class MyApp(App):
-    def build(self):
-        self.title = "Password Manager"
-        return MainScreen(fernetGenerator, key)
-
-
-MyApp().run()
+# class MyApp(App):
+#     def build(self):
+#         self.title = "Password Manager"
+#         return MainScreen(fernetGenerator, key)
+#
+#
+# MyApp().run()
