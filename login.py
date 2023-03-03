@@ -1,5 +1,4 @@
 import bcrypt
-import kivy
 from cryptography.fernet import Fernet
 from kivy.uix.label import Label
 from kivy.uix.textinput import TextInput
@@ -8,12 +7,6 @@ from kivy.uix.button import Button
 from kivy.uix.popup import Popup
 
 from manager import MainScreen
-
-kivy.require('2.1.0')
-
-
-# abcd
-# 1234
 
 
 class Login(FloatLayout):

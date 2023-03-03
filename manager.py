@@ -8,6 +8,7 @@ from kivy.uix.button import Button
 from kivy.uix.popup import Popup
 from kivy.uix.scrollview import ScrollView
 
+
 class MainScreen(GridLayout):
     # constructor in which main layouts are prepared
     def __init__(self, fernetGenerator, key):
