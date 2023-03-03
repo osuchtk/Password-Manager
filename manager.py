@@ -1,12 +1,4 @@
-from kivy.config import Config
-
-Config.set('graphics', 'resizable', False)
-Config.set('graphics', 'width', '450')
-Config.set('graphics', 'height', '320')
-import kivy
-
 from cryptography.fernet import Fernet
-from kivy.app import App
 from functools import partial
 from kivy.uix.label import Label
 from kivy.uix.textinput import TextInput
@@ -15,10 +7,6 @@ from kivy.uix.floatlayout import FloatLayout
 from kivy.uix.button import Button
 from kivy.uix.popup import Popup
 from kivy.uix.scrollview import ScrollView
-from kivy.core.window import Window
-
-kivy.require('2.1.0')
-
 
 class MainScreen(GridLayout):
     # constructor in which main layouts are prepared
@@ -37,7 +25,6 @@ class MainScreen(GridLayout):
         self.descriptionEdited = None
         self.addNewInformation = None
         self.listPosition = None
-        self.scroll = None
         self.fernetGenerator = fernetGenerator
         self.privateKey = key
 
@@ -49,7 +36,6 @@ class MainScreen(GridLayout):
         # button for addind new records
         self.addData = Button(text="Add data",
                               size_hint=(0.2, None),
-                              # width = 70,
                               height=30,
                               background_normal='',
                               background_color=(1, 0, 0, 1))
@@ -61,7 +47,8 @@ class MainScreen(GridLayout):
                              size_hint=(0.5, None),
                              width=90,
                              height=30,
-                             underline=True)
+                             underline=True,
+                             font_size=17)
         self.add_widget(self.addData)
 
         # preparing layout for accounts list
@@ -78,12 +65,9 @@ class MainScreen(GridLayout):
         self.scroll = ScrollView(do_scroll_y=True,
                                  do_scroll_x=False,
                                  size_hint=(0.22, 1),
-                                 bar_color=(1, 1, 1, 1),
-                                 size=(Window.width, Window.height))
+                                 bar_color=(1, 1, 1, 1))
         self.scroll.add_widget(self.savedAccountsLayout)
         self.add_widget(self.scroll)
-        # self.add_widget(self.savedAccountsLayout)
-        # self.savedAccountsLayout.add_widget(self.scroll)
 
         # friendly information to choose one account from the list
         informationLabel = Label(text="Choose account to see credentials.",
@@ -91,7 +75,9 @@ class MainScreen(GridLayout):
                                  pos_hint={'x': 0.28, 'y': 0.6})
         self.logoutButton = Button(text="Logout",
                                    size_hint=(0.3, 0.1),
-                                   pos_hint={'x': 0.35, 'y': 0.05})
+                                   pos_hint={'x': 0.35, 'y': 0.05},
+                                   background_normal='',
+                                   background_color=(0.36, 0.34, 0.42, 1))
         self.logoutButton.bind(on_press=self.logout)
         self.showAccountDetailsLayout.add_widget(informationLabel)
         self.showAccountDetailsLayout.add_widget(self.logoutButton)
@@ -107,37 +93,28 @@ class MainScreen(GridLayout):
         # where credential is used
         self.WhereToUse = TextInput(multiline=False,
                                     hint_text="Where to use credentials",
-                                    size_hint=(1, 1),
-                                    pos=(200, 200),
                                     write_tab=False)
 
         # text input for username
         self.username = TextInput(multiline=False,
                                   hint_text="Username",
-                                  size_hint=(1, 1),
-                                  pos=(200, 200),
                                   write_tab=False)
 
         # text input for password
         self.password = TextInput(multiline=False,
                                   hint_text="Password",
-                                  size_hint=(1, 1),
-                                  pos=(200, 200),
+                                  password=True,
                                   write_tab=False)
 
         # text input for additional description
         self.description = TextInput(multiline=True,
                                      hint_text="Description",
-                                     size_hint=(1, 1),
-                                     pos=(200, 200),
                                      write_tab=False)
 
         # button for saving information
         self.addButton = Button(text="Save",
-                                size_hint=(1, 1),
                                 background_normal='',
-                                background_color=(1, 0, 0, 1),
-                                pos=(120, 25))
+                                background_color=(1, 0, 0, 1))
 
         # button to reject changes
         self.cancelButton = Button(text="Cancel",
@@ -198,7 +175,7 @@ class MainScreen(GridLayout):
         # if credentials are not good show another popup
         else:
             newCredentialsLayoutError = FloatLayout()
-            info = Label(text="Descripton can not be empty.\n"
+            info = Label(text="Description can not be empty.\n"
                               "Username can not be empty.\n"
                               "Password can not be empty.",
                          pos_hint={'x': 0., 'y': 0.20})
@@ -252,7 +229,7 @@ class MainScreen(GridLayout):
                                            width=125,
                                            height=30,
                                            background_normal='',
-                                           background_color=(0.96, 0.71, 0, 1))
+                                           background_color=(0.86, 0.62, 0, 1))
 
                 # adding username, password and description to details
                 self.listPosition.bind(on_press=partial(self.showAccountInformation, self.username, decryptedPassword,
@@ -295,15 +272,22 @@ class MainScreen(GridLayout):
         # adding buttons to delete and edit data
         editButton = Button(text="Edit",
                             size_hint=(0.3, 0.1),
-                            pos_hint={'x': 0.15, 'y': 0.2})
+                            pos_hint={'x': 0.15, 'y': 0.2},
+                            background_normal='',
+                            background_color=(0.17, 0.35, 0.76, 1))
         editButton.bind(on_press=partial(self.editCredentials, username, password, description, whereUsedIndex))
         deleteButton = Button(text = "Delete",
                               size_hint=(0.3, 0.1),
-                              pos_hint={'x': 0.55, 'y': 0.2})
+                              pos_hint={'x': 0.55, 'y': 0.2},
+                              background_normal='',
+                              background_color=(0.17, 0.35, 0.76, 1))
         deleteButton.bind(on_press=partial(self.deleteCredentials, whereUsedIndex))
         closeButton = Button(text="Close",
                              size_hint=(0.3, 0.1),
-                             pos_hint={'x': 0.35, 'y': 0.05})
+                             pos_hint={'x': 0.35, 'y': 0.05},
+                             background_normal='',
+                             background_color=(0.36, 0.34, 0.42, 1)
+                             )
         closeButton.bind(on_press=self.clearDetails)
 
         self.showAccountDetailsLayout.add_widget(usernameLabel)
@@ -371,7 +355,7 @@ class MainScreen(GridLayout):
         self.cancelButton = Button(text="Cancel",
                                    size_hint=(1, 1),
                                    background_normal='',
-                                   background_color=(1, 0, 0, 1),
+                                   background_color=(0.36, 0.34, 0.42, 1),
                                    pos=(120, 25))
 
         # adding widgets
@@ -399,8 +383,9 @@ class MainScreen(GridLayout):
                                    pos_hint={'x': 0., 'y': 0.15})
             confirmButton = Button(text="OK",
                                    size_hint=(0.3, 0.2),
-                                   pos_hint={'x': 0.35, 'y': 0.1}
-                                   )
+                                   pos_hint={'x': 0.35, 'y': 0.1},
+                                   background_normal='',
+                                   background_color=(0.36, 0.34, 0.42, 1))
 
             rejectEditLayout.add_widget(emptyDataLabel)
             rejectEditLayout.add_widget(confirmButton)
@@ -465,10 +450,14 @@ class MainScreen(GridLayout):
                                  pos_hint={'x': 0., 'y': 0.25})
         confirmButton = Button(text="OK",
                                size_hint=(0.3, 0.25),
-                               pos_hint={'x': 0.55, 'y': 0.1})
+                               pos_hint={'x': 0.55, 'y': 0.1},
+                               background_normal='',
+                               background_color=(1, 0., 0., 1))
         cancelButton = Button(text="Cancel",
                               size_hint=(0.3, 0.25),
-                              pos_hint={'x': 0.15, 'y': 0.1})
+                              pos_hint={'x': 0.15, 'y': 0.1},
+                              background_normal='',
+                              background_color=(0.36, 0.34, 0.42, 1))
 
         deleteLayout.add_widget(informationLabel)
         deleteLayout.add_widget(confirmButton)
@@ -519,16 +508,3 @@ class MainScreen(GridLayout):
         self.clear_widgets()
         from login import Login
         self.add_widget(Login())
-
-
-fernetGenerator = b'6vEhzwGrIgziXF4I7GPRKOZTlXGR-DpZCRg1bkiEmP0=\n'
-key = b'\xe6S\x95q\x91\xf8:Y\t\x185nH\x84\x98\xfd\n'
-
-
-# class MyApp(App):
-#     def build(self):
-#         self.title = "Password Manager"
-#         return MainScreen(fernetGenerator, key)
-#
-#
-# MyApp().run()

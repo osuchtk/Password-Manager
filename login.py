@@ -3,11 +3,9 @@ import kivy
 from cryptography.fernet import Fernet
 from kivy.uix.label import Label
 from kivy.uix.textinput import TextInput
-from kivy.uix.gridlayout import GridLayout
 from kivy.uix.floatlayout import FloatLayout
 from kivy.uix.button import Button
 from kivy.uix.popup import Popup
-from kivy.core.window import Window
 
 from manager import MainScreen
 
@@ -28,19 +26,17 @@ class Login(FloatLayout):
 
         # label text
         self.add_widget(Label(text="Password Manager",
-                              size_hint=(1, 1),
-                              pos=(0, 120),
+                              pos_hint={'x': 0., 'y': 0.37},
                               bold=True,
                               font_size=20,
                               underline=True))
         # username label and text field
         self.usernameLabel = Label(text="Login",
-                                   size_hint=(1, 1),
-                                   pos=(-130, 50))
+                                   pos_hint={'x': -0.26, 'y': 0.15})
         self.add_widget(self.usernameLabel)
         self.username = TextInput(multiline=False,
                                   size_hint=(None, None),
-                                  pos=(200, 200),
+                                  pos_hint={'x': 0.45, 'y': 0.62},
                                   width=200,
                                   height=30,
                                   write_tab=False)
@@ -48,13 +44,12 @@ class Login(FloatLayout):
 
         # password label and text field
         self.passwordLabel = Label(text="Password",
-                                   size_hint=(1, 1),
-                                   pos=(-130, -10))
+                                   pos_hint={'x': -0.26, 'y': -0.02})
         self.add_widget(self.passwordLabel)
         self.password = TextInput(multiline=False,
                                   password=True,
                                   size_hint=(None, None),
-                                  pos=(200, 140),
+                                  pos_hint={'x': 0.45, 'y': 0.44},
                                   width=200,
                                   height=30,
                                   write_tab=False)
@@ -62,27 +57,23 @@ class Login(FloatLayout):
 
         # login button
         self.loginButton = Button(text="Login",
-                                  size_hint=(None, None),
-                                  width=200,
-                                  height=30,
+                                  size_hint=(0.45, 0.1),
                                   background_color=(1, 0, 0, 1),
-                                  pos=(120, 75))
+                                  pos_hint={'x': 0.265, 'y': 0.23})
         self.add_widget(self.loginButton)
         self.loginButton.bind(on_press=self.loginFunction)
 
         # register button
         self.registerButton = Button(text="Don't have account?",
-                                     size_hint=(None, None),
-                                     width=200,
-                                     height=25,
+                                     size_hint=(0.44, 0.08),
                                      background_normal='',
                                      background_color=(1, 0, 0, 1),
-                                     pos=(120, 30))
+                                     pos_hint={'x': 0.27, 'y': 0.09})
         self.add_widget(self.registerButton)
         self.registerButton.bind(on_press=self.register)
 
     # method used to log in into application
-    def loginFunction(self, object):
+    def loginFunction(self, obj):
         # reading credentials from file
         file = open("./credentials.txt", "rb")
         usernameFile = str(file.readline()).split("'")[1].split('\\')[0]
@@ -98,44 +89,48 @@ class Login(FloatLayout):
             self.clear_widgets()
             self.add_widget(MainScreen(self.fernetGenerator, self.key))
         else:
+            loginErrorLayout = FloatLayout()
+            label = Label(text="Wrong username or password",
+                          pos_hint={'x': 0., 'y': 0.25})
             closeButton = Button(text='Close',
-                                 size_hint=(None, None),
-                                 width=100,
-                                 height=30,
-                                 pos=(0, 50))
-            information = Popup(title="Wrong username or password",
-                                auto_dismiss=False,
-                                content=closeButton,
-                                size_hint=(None, None),
-                                width=230,
-                                height=100)
+                                 size_hint=(0.5, 0.3),
+                                 pos_hint={'x': 0.25, 'y': 0.1})
+
+            loginErrorLayout.add_widget(label)
+            loginErrorLayout.add_widget(closeButton)
+
+            information = Popup(title="Warning",
+                                content=loginErrorLayout,
+                                size_hint=(0.5, 0.5))
             closeButton.bind(on_press=information.dismiss)
             information.open()
 
     # metohd preparing view for registration
-    def register(self, object):
+    def register(self, obj):
         # clearing view
         self.clear_widgets()
+        self.username.text = ""
+        self.password.text = ""
         self.add_widget(self.usernameLabel)
         self.add_widget(self.username)
         self.add_widget(self.passwordLabel)
         self.add_widget(self.password)
 
+        welcomingLabel = Label(text="Welcome to Password Manager",
+                               pos_hint={'x': 0., 'y': 0.33})
+        self.add_widget(welcomingLabel)
+
         createAccount = Button(text="Create account!",
-                               size_hint=(None, None),
-                               width=200,
-                               height=30,
-                               background_color=(1, 0, 0, 1),
-                               pos=(120, 75))
+                               size_hint=(0.45, 0.1),
+                               pos_hint={'x': 0.265, 'y': 0.23},
+                               background_color=(1, 0, 0, 1))
         self.add_widget(createAccount)
 
         backButton = Button(text="Cancel",
-                                size_hint=(None, None),
-                                width=200,
-                                height=25,
-                                background_normal='',
-                                background_color=(1, 0, 0, 1),
-                                pos=(120, 30))
+                            size_hint=(0.44, 0.08),
+                            pos_hint={'x': 0.27, 'y': 0.09},
+                            background_normal='',
+                            background_color=(1, 0, 0, 1))
         self.add_widget(backButton)
 
         createAccount.bind(on_press=self.createNewAccountWarning)
@@ -145,27 +140,34 @@ class Login(FloatLayout):
     def createNewAccountWarning(self, obj):
         # empty username or password
         if len(self.username.text) == 0 or len(self.password.text) == 0:
-            informationLayout = GridLayout(rows=3, padding=5)
-            textLabel = Label(text="Username or password can not be empty!")
-            continueButton = Button(text="Continue")
+            informationLayout = FloatLayout()
+            textLabel = Label(text="Username or password\ncan not be empty!",
+                              pos_hint={'x': 0., 'y': 0.2})
+            continueButton = Button(text="Continue",
+                                    size_hint=(0.5, 0.3),
+                                    pos_hint={'x': 0.25, 'y': 0.03})
             informationLayout.add_widget(textLabel)
             informationLayout.add_widget(continueButton)
             information = Popup(title="Warning!",
-                                content=informationLayout)
+                                content=informationLayout,
+                                size_hint=(0.5, 0.5))
             information.open()
 
             continueButton.bind(on_press=information.dismiss)
 
         else:
             # register information
-            informationLayout = GridLayout(rows=4, padding=5)
+            informationLayout = FloatLayout()
             textLabel = Label(text="You are trying to create new account.If it is your first time\nlogging into "
                                    "application click Continue, otherwise click Cancel.\nCreating new account while "
                                    "having passwords wrote up\nin the memory will erase them!",
-                              size_hint=(1, 1),
-                              pos=(500, 120))
-            continueButton = Button(text="Continue")
-            cancelButton = Button(text="Cancel")
+                              pos_hint={'x': 0., 'y': 0.25})
+            continueButton = Button(text="Continue",
+                                    size_hint=(0.3, 0.2),
+                                    pos_hint={'x': 0.55, 'y': 0.1})
+            cancelButton = Button(text="Cancel",
+                                  size_hint=(0.3, 0.2),
+                                  pos_hint={'x': 0.15, 'y': 0.1})
 
             informationLayout.add_widget(textLabel)
             informationLayout.add_widget(continueButton)
@@ -180,7 +182,7 @@ class Login(FloatLayout):
             continueButton.bind(on_press=self.createNewAccount)
 
     # method saving new account into file
-    def createNewAccount(self, object):
+    def createNewAccount(self, obj):
         # writing credentials to file
         # but first some password hashing and preparing encoding
         salt = bcrypt.gensalt()
@@ -198,16 +200,21 @@ class Login(FloatLayout):
         file.close()
 
         # showing popup when account created
-        informationLayout = GridLayout(rows=3, padding=5)
-        textLabel = Label(text="Account created!")
-        continueButton = Button(text="Continue")
+        informationLayout = FloatLayout()
+        textLabel = Label(text="Account created!",
+                          pos_hint={'x': 0., 'y': 0.2})
+        continueButton = Button(text="Continue",
+                                size_hint=(0.5, 0.3),
+                                pos_hint={'x': 0.25, 'y': 0.1})
         informationLayout.add_widget(textLabel)
         informationLayout.add_widget(continueButton)
         information = Popup(title="Success!",
-                            content=informationLayout)
+                            content=informationLayout,
+                            size_hint=(0.5, 0.5))
         information.open()
 
         continueButton.bind(on_press=information.dismiss)
+        continueButton.bind(on_press=self.reloadMainView)
 
     def reloadMainView(self, obj):
         self.clear_widgets()
